@@ -1,16 +1,53 @@
-# React + Vite
+# ☕ Cafe Finder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cafe Finder is a simple, UI-focused web application that helps users discover cafés near them by entering a ZIP code.  
+The project emphasizes clean design, responsiveness, and incremental development.
 
-Currently, two official plugins are available:
+This repository is being built gradually with small, intentional commits.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## ✨ Current Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Full-screen responsive landing page
+- Centered title and icon layout
+- Clean, minimal UI design
+- Mobile-friendly scaling
+- Project structure prepared for multi-page routing
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🛠️ Tech Stack
+
+- React
+- Vite
+- React Router
+- CSS (responsive + modern layout techniques)
+
+---
+
+## 🧭 Planned Features
+
+- ZIP code input screen
+- Café results list with distance and location
+- Google Places API integration
+- Loading and empty states
+- Subtle animations and transitions
+- Clickable café links (Google Maps directions)
+- Responsive layout for all screen sizes
+
+---
+
+## 🎯 Project Goals
+
+- Practice building a real-world frontend application
+- Focus on UI polish and layout accuracy
+- Maintain consistent GitHub contributions
+- Build features incrementally instead of all at once
+
+---
+
+## 🚧 Project Status
+
+This project is currently in early development.  
+Functionality will be added gradually as the UI and navigation are finalized.
