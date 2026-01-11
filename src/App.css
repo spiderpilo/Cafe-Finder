@@ -55,6 +55,9 @@
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
+  width: clamp(80px, 12vw, 120px);
+  height: auto;
+  display: block;
 }
 
 .home-icon:hover {
@@ -102,5 +105,11 @@
   cursor: pointer;
 }
 
+.icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
 
 
