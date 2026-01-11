@@ -88,3 +88,7 @@ body {
   align-items: center;
 }
 
+.search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
