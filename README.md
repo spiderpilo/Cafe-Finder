@@ -14,6 +14,7 @@ This repository is being built gradually with small, intentional commits.
 - Clean, minimal UI design
 - Mobile-friendly scaling
 - Project structure prepared for multi-page routing
+- ZIP code input screen
 
 ---
 
@@ -28,7 +29,6 @@ This repository is being built gradually with small, intentional commits.
 
 ## 🧭 Planned Features
 
-- ZIP code input screen
 - Café results list with distance and location
 - Google Places API integration
 - Loading and empty states
