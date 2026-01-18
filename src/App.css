@@ -110,6 +110,16 @@
   border: none;
   padding: 0;
   cursor: pointer;
+
+  transition: transform 0.15s ease;
+}
+
+.icon-button:hover {
+  transform: scale(1.05);
+}
+
+.icon-button:active {
+  transform: scale(0.98);
 }
 
 .back-button {
