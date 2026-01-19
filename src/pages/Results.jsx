@@ -17,24 +17,26 @@ export default function Results() {
   return (
     <div className="panel">
       <div className="results-stack">
-        <button className="back-button" type="button" onClick={() => navigate("/search")}>
+        <button
+          className="back-button"
+          type="button"
+          onClick={() => navigate("/search")}
+        >
           ← Back
         </button>
 
         <h1 className="home-title">Cafes near {zip}</h1>
 
-        <div className="results-list">
-          {cafes.map((cafe) => (
-            <CafeRow
-              key={cafe.id}
-              name={cafe.name}
-              address={cafe.address}
-              distance={cafe.distance}
-            />
-          ))}
-        </div>
+        {cafes.map((cafe) => (
+          <CafeRow
+            key={cafe.id}
+            name={cafe.name}
+            address={cafe.address}
+            distance={cafe.distance}
+            onClick={() => console.log("Clicked:", cafe.name)}
+          />
+        ))}
       </div>
     </div>
   );
 }
-

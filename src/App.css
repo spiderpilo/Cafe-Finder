@@ -171,7 +171,23 @@
   border-radius: 10px;
 
   background: rgba(255, 255, 255, 0.25);
+
+  border: none;
+  cursor: pointer;
+  text-align: left;
+
+  transition: transform 0.12s ease, background 0.12s ease;
 }
+
+.cafe-row:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.cafe-row:active {
+  transform: translateY(0px) scale(0.99);
+}
+
 
 .cafe-row-left {
   display: flex;
