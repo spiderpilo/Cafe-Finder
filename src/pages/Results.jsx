@@ -18,6 +18,7 @@ export default function Results() {
     async function load() {
       setLoading(true);
       const data = await getCafesByZip(zip);
+
       if (!cancelled) {
         setCafes(data);
         setLoading(false);
@@ -34,7 +35,11 @@ export default function Results() {
   return (
     <div className="panel">
       <div className="results-stack">
-        <button className="back-button" type="button" onClick={() => navigate("/search")}>
+        <button
+          className="back-button"
+          type="button"
+          onClick={() => navigate("/search")}
+        >
           ← Back
         </button>
 
