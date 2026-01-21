@@ -61,17 +61,22 @@ body {
   font-weight: 800;
   color: #111;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
 }
 
 .home-icon {
   width: 140px;
-  height: 140px;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   width: clamp(80px, 12vw, 120px);
   height: auto;
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .home-icon:hover {
@@ -88,6 +93,7 @@ body {
   padding: 0;
 
   display: flex;
+  justify-content: center;
   flex-direction: column;
   align-items: center;
 }
@@ -142,7 +148,6 @@ body {
   border: none;
   padding: 0;
   cursor: pointer;
-
   transition: transform 0.15s ease;
 }
 
