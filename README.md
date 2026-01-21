@@ -1,53 +1,46 @@
-# ☕ Cafe Finder
+# ☕ Café Finder
 
-Cafe Finder is a simple, UI-focused web application that helps users discover cafés near them by entering a ZIP code.  
-The project emphasizes clean design, responsiveness, and incremental development.
+A lightweight web app that helps users discover **high-quality coffee shops near them**, prioritizing well-reviewed local cafés over generic chains.
 
-This repository is being built gradually with small, intentional commits.
-
----
-
-## ✨ Current Features
-
-- Full-screen responsive landing page
-- Centered title and icon layout
-- Clean, minimal UI design
-- Mobile-friendly scaling
-- Project structure prepared for multi-page routing
-- ZIP code input screen
+Built as a portfolio project to demonstrate **clean UI, thoughtful data handling, and user-centered design**.
 
 ---
 
-## 🛠️ Tech Stack
-
-- React
-- Vite
-- React Router
-- CSS (responsive + modern layout techniques)
+## Why I built this
+Finding *good* coffee isn’t just about proximity — it’s about quality and consistency.  
+This project focuses on surfacing **reliable, well-reviewed coffee spots** while keeping the experience fast and simple.
 
 ---
 
-## 🧭 Planned Features
-
-- Café results list with distance and location
-- Google Places API integration
-- Loading and empty states
-- Subtle animations and transitions
-- Clickable café links (Google Maps directions)
-- Responsive layout for all screen sizes
+## What it does
+- 📍 Find cafés near you using your **current location** or a **ZIP code**
+- ⭐ Rank results intelligently using **ratings and review volume**
+- 🏷️ Highlight **recommended cafés** for quick decision-making
+- 🗺️ Open locations directly in **Google Maps**
 
 ---
 
-## 🎯 Project Goals
-
-- Practice building a real-world frontend application
-- Focus on UI polish and layout accuracy
-- Maintain consistent GitHub contributions
-- Build features incrementally instead of all at once
+## Key features
+- Location-based search (ZIP or “Use my location”)
+- Quality-based ranking (not just distance)
+- Clean, responsive, card-based UI
+- Simple, readable architecture
 
 ---
 
-## 🚧 Project Status
+## Tech stack
+- **Frontend:** React, Vite, CSS
+- **Backend:** Node.js (serverless API)
+- **APIs:** Google Maps & Places
 
-This project is currently in early development.  
-Functionality will be added gradually as the UI and navigation are finalized.
+---
+
+## Design & engineering notes
+- Recommendation logic is separated from UI for clarity and scalability
+- UI favors readability and spacing over dense layouts
+- Built with deployment and real-world usage in mind
+
+---
+
+## Status
+🚧 Portfolio project — actively iterated and refined.
