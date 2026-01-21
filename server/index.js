@@ -18,7 +18,9 @@ function milesBetween(lat1, lng1, lat2, lng2) {
 
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLng / 2) ** 2;
 
   return 2 * R * Math.asin(Math.sqrt(a));
 }
@@ -40,20 +42,42 @@ async function geocodeZip(zip) {
 }
 
 async function nearbyCafes({ lat, lng }) {
-  const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
+  const url = new URL(
+    "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+  );
   url.searchParams.set("location", `${lat},${lng}`);
   url.searchParams.set("radius", "5000"); // meters (~3.1 miles)
   url.searchParams.set("type", "cafe");
+
+  // Helps bias toward actual coffee spots
+  url.searchParams.set("keyword", "coffee");
+
   url.searchParams.set("key", API_KEY);
 
   const res = await fetch(url);
   const data = await res.json();
 
-  if (data.status !== "OK") {
+  if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
     throw new Error(`Places failed: ${data.status}`);
   }
 
   return data.results ?? [];
+}
+
+function parseCoords(req) {
+  const latRaw = req.query.lat;
+  const lngRaw = req.query.lng;
+
+  if (latRaw == null || lngRaw == null) return null;
+
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90) return null;
+  if (lng < -180 || lng > 180) return null;
+
+  return { lat, lng };
 }
 
 app.get("/api/cafes", async (req, res) => {
@@ -62,16 +86,29 @@ app.get("/api/cafes", async (req, res) => {
       return res.status(500).json({ error: "Missing GOOGLE_MAPS_API_KEY" });
     }
 
+    // 1) Prefer coords if provided
+    const coords = parseCoords(req);
+
+    // 2) Otherwise use zip
     const zip = String(req.query.zip || "").trim();
 
-    if (!/^\d{5}$/.test(zip)) {
-      return res.status(400).json({ error: "Invalid zip. Expected 5 digits." });
+    let center = null;
+
+    if (coords) {
+      center = coords;
+    } else {
+      if (!/^\d{5}$/.test(zip)) {
+        return res.status(400).json({
+          error:
+            "Provide either a valid zip (5 digits) or valid lat & lng query params.",
+        });
+      }
+      center = await geocodeZip(zip);
     }
 
-    const center = await geocodeZip(zip);
     const results = await nearbyCafes(center);
 
-    const cafes = results.slice(0, 10).map((p, idx) => {
+    const cafes = results.slice(0, 12).map((p, idx) => {
       const plat = p.geometry?.location?.lat;
       const plng = p.geometry?.location?.lng;
 
@@ -88,13 +125,26 @@ app.get("/api/cafes", async (req, res) => {
         distance,
         placeId: p.place_id || null,
         location: { lat: plat, lng: plng },
+
+  
+        rating: typeof p.rating === "number" ? p.rating : null,
+        user_ratings_total:
+          typeof p.user_ratings_total === "number" ? p.user_ratings_total : 0,
       };
     });
 
-    res.json({ zip, cafes });
+    res.json({
+      zip: coords ? null : zip,
+      center,
+      cafes,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to fetch cafes" });
+
+    res.status(500).json({
+      error: "Failed to fetch cafes",
+      details: err?.message || String(err),
+    });
   }
 });
 
