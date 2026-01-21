@@ -35,11 +35,7 @@ export default function Results() {
   return (
     <div className="panel">
       <div className="results-stack">
-        <button
-          className="back-button"
-          type="button"
-          onClick={() => navigate("/search")}
-        >
+        <button className="back-button" type="button" onClick={() => navigate("/search")}>
           ← Back
         </button>
 
@@ -48,15 +44,23 @@ export default function Results() {
         {loading ? (
           <p>Loading cafes…</p>
         ) : (
-          cafes.map((cafe) => (
-            <CafeRow
-              key={cafe.id}
-              name={cafe.name}
-              address={cafe.address}
-              distance={cafe.distance}
-              onClick={() => console.log("Clicked:", cafe.name)}
-            />
-          ))
+          cafes.map((cafe) => {
+            const href = cafe.placeId
+              ? `https://www.google.com/maps/search/?api=1&query_place_id=${cafe.placeId}`
+              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  `${cafe.name} ${cafe.address}`
+                )}`;
+
+            return (
+              <CafeRow
+                key={cafe.id}
+                name={cafe.name}
+                address={cafe.address}
+                distance={cafe.distance}
+                href={href}
+              />
+            );
+          })
         )}
       </div>
     </div>

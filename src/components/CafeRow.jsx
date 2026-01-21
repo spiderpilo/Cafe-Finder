@@ -1,13 +1,12 @@
-export default function CafeRow({ name, address, distance, onClick }) {
+export default function CafeRow({ name, address, distance, href }) {
   return (
-    <button className="cafe-row" type="button" onClick={onClick}>
+    <a className="cafe-row" href={href} target="_blank" rel="noreferrer">
       <div className="cafe-row-left">
         <p className="cafe-name">{name}</p>
         <p className="cafe-address">{address}</p>
       </div>
 
       <p className="cafe-distance">{distance}</p>
-    </button>
+    </a>
   );
 }
-
