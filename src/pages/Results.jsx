@@ -7,16 +7,20 @@ export default function Results() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Read the zip from the URL (?zip=90703)
   const zip = new URLSearchParams(location.search).get("zip") || "";
 
+  // State for cafe data
   const [cafes, setCafes] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch cafes whenever the zip changes
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
+    async function loadCafes() {
       setLoading(true);
+
       const data = await getCafesByZip(zip);
 
       if (!cancelled) {
@@ -25,8 +29,9 @@ export default function Results() {
       }
     }
 
-    load();
+    loadCafes();
 
+    // Cleanup to avoid setting state if component unmounts
     return () => {
       cancelled = true;
     };
@@ -35,18 +40,26 @@ export default function Results() {
   return (
     <div className="panel">
       <div className="results-stack">
-        <button className="back-button" type="button" onClick={() => navigate("/search")}>
+        {/* Back button */}
+        <button
+          className="back-button"
+          type="button"
+          onClick={() => navigate("/search")}
+        >
           ← Back
         </button>
 
+        {/* Page title */}
         <h1 className="home-title">Cafes near {zip}</h1>
 
+        {/* Loading vs results */}
         {loading ? (
           <p>Loading cafes…</p>
         ) : (
           cafes.map((cafe) => {
+            // Build a Google Maps link that opens the EXACT cafe
             const href = cafe.placeId
-              ? `https://www.google.com/maps/search/?api=1&query_place_id=${cafe.placeId}`
+              ? `https://www.google.com/maps/place/?q=place_id:${cafe.placeId}`
               : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                   `${cafe.name} ${cafe.address}`
                 )}`;
