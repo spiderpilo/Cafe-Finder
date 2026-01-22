@@ -69,10 +69,10 @@ body {
 
 .home-icon {
   width: 140px;
+  font-size: 200px;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  width: clamp(80px, 12vw, 120px);
   height: auto;
   display: flex;
   justify-content: center;
@@ -80,8 +80,7 @@ body {
 }
 
 .home-icon:hover {
-  transform: scale(1.05);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transform: scale(1.15);
 }
 
 .panel {
@@ -159,6 +158,10 @@ body {
   transform: scale(0.98);
 }
 
+.icon-button:active{
+  outline: none;
+}
+
 .back-button {
   align-self: flex-start;
   margin: 0 0 10px;
@@ -193,7 +196,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
+  
   padding: 18px 18px;
   border-radius: 16px;
 
