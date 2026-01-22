@@ -68,13 +68,14 @@ body {
 }
 
 .home-icon {
-  width: 140px;
-  font-size: 200px;
+  width: 160px;
+  font-size: 220px;
   border-radius: 50%;
   cursor: pointer;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   height: auto;
   display: flex;
+  flex-grow: 1;
   justify-content: center;
   align-items: center;
 }
@@ -105,10 +106,11 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 32px 16px;
 
-  background: #95b98e; 
+  padding: 32px 16px;
+  background: #95b98e;
 }
+
 
 
 .zip-input {
@@ -183,17 +185,27 @@ body {
   background: rgba(255, 255, 255, 0.18);
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 .results-stack {
-  width: min(760px, 92vw);
+  width: 100%;
+  max-width: 760px;
+  min-width: 320px;
+
   display: flex;
   flex-direction: column;
-  align-items: stretch; 
-  gap: 18px;            
+  align-items: stretch;
+  gap: 18px;
 }
+
+
 
 .results-list {
   width: 100%;
+  max-width: 760px;
+  min-width: 320px;
   display: flex;
   flex-direction: column;
   gap: 16px;            
@@ -203,6 +215,7 @@ body {
 
 .cafe-row {
   width: 100%;
+  max-width: 760px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -217,6 +230,7 @@ body {
   text-align: left;
 
   transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+  overflow: hidden;
 }
 
 .cafe-row:hover {
@@ -234,6 +248,7 @@ body {
 .cafe-row-left {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 4px;
 }
 
@@ -251,6 +266,7 @@ body {
 
 .cafe-distance {
   margin: 0;
+  flex: 0 0 auto;
   font-weight: 700;
   color: #111;
 }
