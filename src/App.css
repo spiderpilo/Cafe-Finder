@@ -135,6 +135,7 @@ body {
   border: none;
   border-radius: 8px;
   cursor: pointer;
+  color: aliceblue;
 }
 
 .search-button:disabled {
@@ -148,17 +149,16 @@ body {
   padding: 0;
   cursor: pointer;
   transition: transform 0.15s ease;
+  outline: none;
 }
 
 .icon-button:hover {
   transform: scale(1.05);
+  outline: none;
 }
 
 .icon-button:active {
   transform: scale(0.98);
-}
-
-.icon-button:active{
   outline: none;
 }
 
