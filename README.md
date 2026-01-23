@@ -26,7 +26,7 @@ This project focuses on surfacing **reliable, well-reviewed coffee spots** while
 - Clean, responsive, card-based UI
 - Simple, readable architecture
 
----
+----
 
 ## Tech stack
 - **Frontend:** React, Vite, CSS
