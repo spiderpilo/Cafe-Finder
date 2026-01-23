@@ -1,8 +1,6 @@
-// src/services/cafes.js
 
-// In production (Vercel) this will use "/api/cafes".
-// In local dev you can set VITE_API_BASE_URL=http://localhost:3001/api/cafes
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/cafes";
+const API_BASE = "/api/cafes";
+
 
 const CHAIN_KEYWORDS = [
   "starbucks",
