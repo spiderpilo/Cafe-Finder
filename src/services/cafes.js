@@ -1,4 +1,8 @@
-const API_BASE = "http://localhost:3001/api/cafes";
+// src/services/cafes.js
+
+// In production (Vercel) this will use "/api/cafes".
+// In local dev you can set VITE_API_BASE_URL=http://localhost:3001/api/cafes
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/cafes";
 
 const CHAIN_KEYWORDS = [
   "starbucks",
@@ -6,18 +10,15 @@ const CHAIN_KEYWORDS = [
   "peet",
   "philz",
   "coffee bean",
-  "mcdonald"
+  "mcdonald",
 ];
-
 
 function scoreCafe(cafe) {
   const rating = cafe.rating ?? 0;
   const reviews = cafe.user_ratings_total ?? 0;
 
   const name = cafe.name?.toLowerCase() || "";
-  const isChain = CHAIN_KEYWORDS.some(keyword =>
-    name.includes(keyword)
-  );
+  const isChain = CHAIN_KEYWORDS.some((keyword) => name.includes(keyword));
 
   // Favor high rating + many reviews
   let score = rating * Math.log10(reviews + 1);
@@ -28,23 +29,17 @@ function scoreCafe(cafe) {
   return score;
 }
 
-/**
- * Rank cafes by quality score (descending)
- */
 function rankCafes(cafes) {
-  return cafes
-    .map(cafe => ({
+  return (cafes ?? [])
+    .map((cafe) => ({
       ...cafe,
-      qualityScore: scoreCafe(cafe)
+      qualityScore: scoreCafe(cafe),
     }))
     .sort((a, b) => b.qualityScore - a.qualityScore);
 }
 
-/**
- * Fetch cafes by ZIP code
- */
 export async function getCafesByZip(zip) {
-  const res = await fetch(`${API_BASE}?zip=${zip}`);
+  const res = await fetch(`${API_BASE}?zip=${encodeURIComponent(zip)}`);
 
   if (!res.ok) {
     throw new Error("Failed to fetch cafes by ZIP");
@@ -54,9 +49,6 @@ export async function getCafesByZip(zip) {
   return rankCafes(data.cafes);
 }
 
-/**
- * Fetch cafes by coordinates (Use my location)
- */
 export async function getCafesByCoords(lat, lng) {
   const res = await fetch(`${API_BASE}?lat=${lat}&lng=${lng}`);
 

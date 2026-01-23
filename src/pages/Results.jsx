@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import CafeRow from "../components/CafeRow";
-import { getCafesByZip, getCafesByCoords } from "../services/cafes";
+import { getCafesByZip, getCafesByCoords } from "../services/cafes.js";
 
 export default function Results() {
   const location = useLocation();
