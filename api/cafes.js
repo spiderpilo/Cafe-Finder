@@ -1,5 +1,28 @@
-// api/cafes.js
 const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+
+const CHAIN_KEYWORDS = [
+  "starbucks",
+  "dunkin",
+  "peet",
+  "philz",
+  "coffee bean",
+  "coffee bean & tea leaf",
+  "the coffee bean",
+  "mcdonald",
+  "mc donald",
+  "mcdonald's",
+  "mccafe",
+  "tim hortons",
+  "panera",
+  "caribou",
+  "7-eleven",
+  "7 eleven",
+];
+
+function isChainCafe(name = "") {
+  const n = String(name).toLowerCase();
+  return CHAIN_KEYWORDS.some((k) => n.includes(k));
+}
 
 function milesBetween(lat1, lng1, lat2, lng2) {
   const toRad = (v) => (v * Math.PI) / 180;
@@ -72,7 +95,11 @@ export default async function handler(req, res) {
 
     const results = await nearbyCafes(center);
 
-    const cafes = results.slice(0, 10).map((p, idx) => {
+    // ✅ HARD FILTER OUT CHAINS BEFORE SLICING
+    const filtered = results.filter((p) => !isChainCafe(p?.name));
+
+
+    const cafes = filtered.slice(0, 10).map((p, idx) => {
       const plat = p.geometry?.location?.lat;
       const plng = p.geometry?.location?.lng;
 
