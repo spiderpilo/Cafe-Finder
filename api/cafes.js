@@ -17,6 +17,16 @@ const CHAIN_KEYWORDS = [
   "caribou",
   "7-eleven",
   "7 eleven",
+  "7 leaves",
+  "am pm",
+  "costa coffee",
+  "gloria jean's",
+  "tully's",
+  "biggby",
+  "diedrich",
+  "diedrich coffee",
+  "lavazza",
+  "segafredo",
 ];
 
 function isChainCafe(name = "") {
