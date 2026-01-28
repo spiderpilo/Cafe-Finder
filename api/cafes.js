@@ -17,8 +17,9 @@ const CHAIN_KEYWORDS = [
   "caribou",
   "7-eleven",
   "7 eleven",
+  "711",
   "7 leaves",
-  "am pm",
+  "ampm",
   "costa coffee",
   "gloria jean's",
   "tully's",
@@ -46,6 +47,14 @@ function milesBetween(lat1, lng1, lat2, lng2) {
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
 
   return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+function qualityScore(place) {
+  const rating = place.rating ?? 0;
+  const reviews = place.user_ratings_total ?? 0;
+
+  // Weighted score: reward rating + review confidence
+  return rating * Math.log10(reviews + 1);
 }
 
 async function geocodeZip(zip) {
@@ -105,11 +114,15 @@ export default async function handler(req, res) {
 
     const results = await nearbyCafes(center);
 
-    // ✅ HARD FILTER OUT CHAINS BEFORE SLICING
+    // ✅ HARD FILTER CHAINS
     const filtered = results.filter((p) => !isChainCafe(p?.name));
 
+    // ✅ RANK BY QUALITY BEFORE SLICING
+    const ranked = filtered
+      .map((p) => ({ ...p, score: qualityScore(p) }))
+      .sort((a, b) => b.score - a.score);
 
-    const cafes = filtered.slice(0, 10).map((p, idx) => {
+    const cafes = ranked.slice(0, 12).map((p, idx) => {
       const plat = p.geometry?.location?.lat;
       const plng = p.geometry?.location?.lng;
 
@@ -127,13 +140,14 @@ export default async function handler(req, res) {
         placeId: p.place_id || null,
         rating: p.rating ?? null,
         user_ratings_total: p.user_ratings_total ?? null,
+        qualityScore: p.score ?? null,
         location: { lat: plat, lng: plng },
       };
     });
 
     res.status(200).json({ zip: usingCoords ? null : zip, cafes });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Cafe API Error:", err);
     res.status(500).json({ error: "Failed to fetch cafes" });
   }
 }
