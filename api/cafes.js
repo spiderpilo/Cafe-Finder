@@ -30,9 +30,25 @@ const CHAIN_KEYWORDS = [
   "segafredo",
 ];
 
+const ROASTER_KEYWORDS = [
+  "roaster",
+  "roasters",
+  "roastery",
+  "roasting",
+  "micro-roastery",
+  "micro roastery",
+  "coffee roaster",
+  "coffee roasters",
+];
+
 function isChainCafe(name = "") {
   const n = String(name).toLowerCase();
   return CHAIN_KEYWORDS.some((k) => n.includes(k));
+}
+
+function isRoasterCafe(place) {
+  const name = String(place?.name || "").toLowerCase();
+  return ROASTER_KEYWORDS.some((k) => name.includes(k));
 }
 
 function milesBetween(lat1, lng1, lat2, lng2) {
@@ -49,12 +65,40 @@ function milesBetween(lat1, lng1, lat2, lng2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
+// Weighted score: rating + review confidence + roaster bonus
 function qualityScore(place) {
-  const rating = place.rating ?? 0;
-  const reviews = place.user_ratings_total ?? 0;
+  const rating = place?.rating ?? 0;
+  const reviews = place?.user_ratings_total ?? 0;
 
-  // Weighted score: reward rating + review confidence
-  return rating * Math.log10(reviews + 1);
+  // Base: rating * confidence
+  let score = rating * Math.log10(reviews + 1);
+
+  // BIG boost for roasters
+  if (isRoasterCafe(place)) score *= 1.8;
+
+  // Slight penalty for chains (backup, even though we filter them)
+  if (isChainCafe(place?.name)) score *= 0.6;
+
+  return score;
+}
+
+function dedupeByPlaceId(places) {
+  const map = new Map();
+  for (const p of places) {
+    const id = p?.place_id;
+    if (!id) continue;
+
+    // keep the better-scoring entry if duplicates show up
+    const prev = map.get(id);
+    if (!prev) {
+      map.set(id, p);
+    } else {
+      const prevScore = qualityScore(prev);
+      const nextScore = qualityScore(p);
+      if (nextScore > prevScore) map.set(id, p);
+    }
+  }
+  return Array.from(map.values());
 }
 
 async function geocodeZip(zip) {
@@ -73,18 +117,20 @@ async function geocodeZip(zip) {
   return { lat: loc.lat, lng: loc.lng };
 }
 
-async function nearbyCafes({ lat, lng }) {
+// Nearby Search helper (optionally add keyword)
+async function nearbySearch({ lat, lng, radius = 5000, type = "cafe", keyword = "" }) {
   const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
   url.searchParams.set("location", `${lat},${lng}`);
-  url.searchParams.set("radius", "5000");
-  url.searchParams.set("type", "cafe");
+  url.searchParams.set("radius", String(radius));
+  url.searchParams.set("type", type);
+  if (keyword) url.searchParams.set("keyword", keyword);
   url.searchParams.set("key", API_KEY);
 
   const res = await fetch(url);
   const data = await res.json();
 
   if (data.status !== "OK") {
-    throw new Error(`Places failed: ${data.status}`);
+    throw new Error(`Places failed (${keyword || "no-keyword"}): ${data.status}`);
   }
 
   return data.results ?? [];
@@ -112,13 +158,28 @@ export default async function handler(req, res) {
       center = await geocodeZip(zip);
     }
 
-    const results = await nearbyCafes(center);
+    // 1) Roaster-first query (keyword)
+    const roasterResults = await nearbySearch({
+      ...center,
+      radius: 7000, // slightly wider net for roasters
+      type: "cafe",
+      keyword: "coffee roaster roastery", // helps surface roasters
+    });
 
-    // ✅ HARD FILTER CHAINS
-    const filtered = results.filter((p) => !isChainCafe(p?.name));
+    // 2) Normal cafes query
+    const cafeResults = await nearbySearch({
+      ...center,
+      radius: 5000,
+      type: "cafe",
+      keyword: "coffee", // optional: keeps results coffee-relevant
+    });
 
-    // ✅ RANK BY QUALITY BEFORE SLICING
-    const ranked = filtered
+    // Merge → dedupe → hard filter chains
+    const merged = dedupeByPlaceId([...roasterResults, ...cafeResults])
+      .filter((p) => !isChainCafe(p?.name));
+
+    // Rank with roaster boost, then slice
+    const ranked = merged
       .map((p) => ({ ...p, score: qualityScore(p) }))
       .sort((a, b) => b.score - a.score);
 
@@ -140,6 +201,7 @@ export default async function handler(req, res) {
         placeId: p.place_id || null,
         rating: p.rating ?? null,
         user_ratings_total: p.user_ratings_total ?? null,
+        isRoaster: isRoasterCafe(p),          // ✅ helpful for UI badges
         qualityScore: p.score ?? null,
         location: { lat: plat, lng: plng },
       };
