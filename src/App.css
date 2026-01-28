@@ -75,13 +75,13 @@ body {
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   height: auto;
   display: flex;
-  flex-grow: 1;
+  flex-grow: 1.5;
   justify-content: center;
   align-items: center;
 
   transform: scale(0);
   animation: popIn 0.8s ease-out forwards;
-  animation-delay: 0.4s; /* optional */
+  animation-delay: 0.4s; 
 }
 
 @keyframes popIn {
@@ -100,7 +100,7 @@ body {
 
 
 .home-icon:hover {
-  transform: scale(1.15);
+  transform: scale(2.05);
 }
 
 .panel {
