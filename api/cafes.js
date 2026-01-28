@@ -1,7 +1,19 @@
+
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
 const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
+// --- Filters / heuristics ---
 const CHAIN_KEYWORDS = [
   "starbucks",
+  "sbux",
   "dunkin",
   "peet",
   "philz",
@@ -18,14 +30,11 @@ const CHAIN_KEYWORDS = [
   "7-eleven",
   "7 eleven",
   "711",
-  "7 leaves",
   "ampm",
   "costa coffee",
-  "gloria jean's",
-  "tully's",
+  "gloria jean",
+  "tully",
   "biggby",
-  "diedrich",
-  "diedrich coffee",
   "lavazza",
   "segafredo",
 ];
@@ -35,70 +44,39 @@ const ROASTER_KEYWORDS = [
   "roasters",
   "roastery",
   "roasting",
-  "micro-roastery",
   "micro roastery",
-  "coffee roaster",
-  "coffee roasters",
+  "micro-roastery",
 ];
 
+function normalizeName(name = "") {
+  return String(name).toLowerCase().replace(/[^a-z0-9 ]/g, " ");
+}
+
 function isChainCafe(name = "") {
-  const n = String(name).toLowerCase();
-  return CHAIN_KEYWORDS.some((k) => n.includes(k));
+  const n = normalizeName(name);
+  return CHAIN_KEYWORDS.some((k) => n.includes(normalizeName(k).trim()));
 }
 
-function isRoasterCafe(place) {
-  const name = String(place?.name || "").toLowerCase();
-  return ROASTER_KEYWORDS.some((k) => name.includes(k));
+function isRoasterCafe(name = "") {
+  const n = normalizeName(name);
+  return ROASTER_KEYWORDS.some((k) => n.includes(normalizeName(k).trim()));
 }
 
+// Keep the old distance function
 function milesBetween(lat1, lng1, lat2, lng2) {
   const toRad = (v) => (v * Math.PI) / 180;
-  const R = 3958.8;
+  const R = 3958.8; // Earth radius in miles
 
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
 
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLng / 2) ** 2;
 
   return 2 * R * Math.asin(Math.sqrt(a));
-}
-
-// Weighted score: rating + review confidence + roaster bonus
-function qualityScore(place) {
-  const rating = place?.rating ?? 0;
-  const reviews = place?.user_ratings_total ?? 0;
-
-  // Base: rating * confidence
-  let score = rating * Math.log10(reviews + 1);
-
-  // BIG boost for roasters
-  if (isRoasterCafe(place)) score *= 1.8;
-
-  // Slight penalty for chains (backup, even though we filter them)
-  if (isChainCafe(place?.name)) score *= 0.6;
-
-  return score;
-}
-
-function dedupeByPlaceId(places) {
-  const map = new Map();
-  for (const p of places) {
-    const id = p?.place_id;
-    if (!id) continue;
-
-    // keep the better-scoring entry if duplicates show up
-    const prev = map.get(id);
-    if (!prev) {
-      map.set(id, p);
-    } else {
-      const prevScore = qualityScore(prev);
-      const nextScore = qualityScore(p);
-      if (nextScore > prevScore) map.set(id, p);
-    }
-  }
-  return Array.from(map.values());
 }
 
 async function geocodeZip(zip) {
@@ -117,71 +95,92 @@ async function geocodeZip(zip) {
   return { lat: loc.lat, lng: loc.lng };
 }
 
-// Nearby Search helper (optionally add keyword)
-async function nearbySearch({ lat, lng, radius = 5000, type = "cafe", keyword = "" }) {
+// Same “one call” vibe as before: Nearby Search + keyword=coffee
+async function nearbyCafes({ lat, lng }) {
   const url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json");
   url.searchParams.set("location", `${lat},${lng}`);
-  url.searchParams.set("radius", String(radius));
-  url.searchParams.set("type", type);
-  if (keyword) url.searchParams.set("keyword", keyword);
+  url.searchParams.set("radius", "5000"); // meters (~3.1 miles)
+  url.searchParams.set("type", "cafe");
+  url.searchParams.set("keyword", "coffee"); // keep your old bias
   url.searchParams.set("key", API_KEY);
 
   const res = await fetch(url);
   const data = await res.json();
 
-  if (data.status !== "OK") {
-    throw new Error(`Places failed (${keyword || "no-keyword"}): ${data.status}`);
+  if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+    throw new Error(`Places failed: ${data.status}`);
   }
 
   return data.results ?? [];
 }
 
-export default async function handler(req, res) {
+function parseCoords(req) {
+  const latRaw = req.query.lat;
+  const lngRaw = req.query.lng;
+
+  if (latRaw == null || lngRaw == null) return null;
+
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90) return null;
+  if (lng < -180 || lng > 180) return null;
+
+  return { lat, lng };
+}
+
+// quality score that keeps old behavior but boosts roasters
+function scorePlace(p) {
+  const rating = typeof p.rating === "number" ? p.rating : 0;
+  const reviews = typeof p.user_ratings_total === "number" ? p.user_ratings_total : 0;
+
+  // Similar vibe to “old list”: still respects Google ordering, but gives a small nudge
+  // Base score: rating confidence
+  let score = rating * Math.log10(reviews + 1);
+
+  // BIG roaster boost so they float upward
+  if (isRoasterCafe(p?.name)) score *= 1.8;
+
+  return score;
+}
+
+app.get("/api/cafes", async (req, res) => {
   try {
     if (!API_KEY) {
       return res.status(500).json({ error: "Missing GOOGLE_MAPS_API_KEY" });
     }
 
+    // Prefer coords if provided
+    const coords = parseCoords(req);
+
+    // Otherwise use zip
     const zip = String(req.query.zip || "").trim();
-    const lat = req.query.lat ? Number(req.query.lat) : null;
-    const lng = req.query.lng ? Number(req.query.lng) : null;
 
-    const usingCoords = Number.isFinite(lat) && Number.isFinite(lng);
+    let center = null;
 
-    let center;
-    if (usingCoords) {
-      center = { lat, lng };
+    if (coords) {
+      center = coords;
     } else {
       if (!/^\d{5}$/.test(zip)) {
-        return res.status(400).json({ error: "Invalid zip. Expected 5 digits." });
+        return res.status(400).json({
+          error:
+            "Provide either a valid zip (5 digits) or valid lat & lng query params.",
+        });
       }
       center = await geocodeZip(zip);
     }
 
-    // 1) Roaster-first query (keyword)
-    const roasterResults = await nearbySearch({
-      ...center,
-      radius: 7000, // slightly wider net for roasters
-      type: "cafe",
-      keyword: "coffee roaster roastery", // helps surface roasters
-    });
+    const results = await nearbyCafes(center);
 
-    // 2) Normal cafes query
-    const cafeResults = await nearbySearch({
-      ...center,
-      radius: 5000,
-      type: "cafe",
-      keyword: "coffee", // optional: keeps results coffee-relevant
-    });
+    // ✅ HARD FILTER CHAINS (Starbucks never appears)
+    const filtered = results.filter((p) => !isChainCafe(p?.name));
 
-    // Merge → dedupe → hard filter chains
-    const merged = dedupeByPlaceId([...roasterResults, ...cafeResults])
-      .filter((p) => !isChainCafe(p?.name));
-
-    // Rank with roaster boost, then slice
-    const ranked = merged
-      .map((p) => ({ ...p, score: qualityScore(p) }))
-      .sort((a, b) => b.score - a.score);
+    // ✅ PRIORITIZE ROASTERS (without changing the “one-call” feel)
+    // Sort by our score, but still largely aligns with the original set of places
+    const ranked = filtered
+      .map((p) => ({ ...p, _score: scorePlace(p) }))
+      .sort((a, b) => b._score - a._score);
 
     const cafes = ranked.slice(0, 12).map((p, idx) => {
       const plat = p.geometry?.location?.lat;
@@ -199,17 +198,31 @@ export default async function handler(req, res) {
         address: p.vicinity || p.formatted_address || "Address unavailable",
         distance,
         placeId: p.place_id || null,
-        rating: p.rating ?? null,
-        user_ratings_total: p.user_ratings_total ?? null,
-        isRoaster: isRoasterCafe(p),          // ✅ helpful for UI badges
-        qualityScore: p.score ?? null,
         location: { lat: plat, lng: plng },
+
+        rating: typeof p.rating === "number" ? p.rating : null,
+        user_ratings_total:
+          typeof p.user_ratings_total === "number" ? p.user_ratings_total : 0,
+
+        
+        isRoaster: isRoasterCafe(p?.name),
       };
     });
 
-    res.status(200).json({ zip: usingCoords ? null : zip, cafes });
+    res.json({
+      zip: coords ? null : zip,
+      center,
+      cafes,
+    });
   } catch (err) {
-    console.error("❌ Cafe API Error:", err);
-    res.status(500).json({ error: "Failed to fetch cafes" });
+    console.error(err);
+
+    res.status(500).json({
+      error: "Failed to fetch cafes",
+      details: err?.message || String(err),
+    });
   }
-}
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
